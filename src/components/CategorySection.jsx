@@ -111,11 +111,11 @@ export default function CategorySection() {
                 }}
               >
                 <img 
-                  src={cat.image || "/images/machines/stirrup-bender-d4.webp"} 
+                  src={cat.image || "/images/machines/stirrup-bender-d4.jpg"} 
                   alt={cat.name} 
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = "/images/machines/stirrup-bender-d4.webp";
+                    e.target.src = "/images/machines/stirrup-bender-d4.jpg";
                   }}
                   style={{ 
                     maxHeight: '100%', 

@@ -4,7 +4,7 @@ export const categories = [
     name: "Rebar Processing Machinery",
     slug: "rebar-processing-machinery",
     description: "High precision automatic rebar stirrup benders, threaders, cutters & benders.",
-    image: "/images/machines/stirrup-bender-d4.webp",
+    image: "/images/machines/stirrup-bender-d4.jpg",
     itemCount: 12
   },
   {
@@ -12,7 +12,7 @@ export const categories = [
     name: "Concrete Mixing & Batching",
     slug: "concrete-mixing-batching",
     description: "Heavy duty concrete mixers with lift, batching plants and pan mixers.",
-    image: "/images/machines/concrete-mixer-machine.webp",
+    image: "/images/machines/concrete-mixer-machine.jpg",
     itemCount: 10
   },
   {

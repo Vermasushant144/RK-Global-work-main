@@ -13,7 +13,7 @@ const iconMap = {
 };
 
 export default function HeroSlide({ slide, isActive, onOpenQuote }) {
-  const [imgSrc, setImgSrc] = useState(slide.image || '/images/machines/stirrup-bender-d4.webp');
+  const [imgSrc, setImgSrc] = useState(slide.image || '/images/machines/stirrup-bender-d4.jpg');
 
   const handleError = () => {
     if (slide.fallbackImage && imgSrc !== slide.fallbackImage) {

@@ -11,8 +11,8 @@ mkdirSync(OUT_DIR, { recursive: true });
 
 // Slider images only
 const SLIDER_IMAGES = [
-  'stirrup-bender-d4.webp',
-  'concrete-mixer-machine.webp',
+  'stirrup-bender-d4.jpg',
+  'concrete-mixer-machine.jpg',
   'suspended-platform-zlp800.webp',
   'rebar-bending-machine.webp'
 ];

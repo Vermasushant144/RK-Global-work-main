@@ -184,7 +184,7 @@ export const insights = [
     category: "Concrete Engineering",
     author: "R.K. Global Engineering",
     readTime: "4 min read",
-    image: "/images/machines/concrete-mixer-machine.webp",
+    image: "/images/machines/concrete-mixer-machine.jpg",
     excerpt: "Abrams' law explained: how water-cement ratio directly dictates 28-day concrete compressive strength.",
     content: `
       <h2>The Critical Balance of Water in Concrete Batches</h2>

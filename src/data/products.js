@@ -9,9 +9,9 @@ export const products = [
     priceNum: 3680000,
     shortDescription: "High-performance rebar processing solution designed for fast and accurate bending of steel bars into stirrups, rings, and complex shapes.",
     description: "The D4 Automatic Stirrup Bending Machine is a high-performance rebar processing solution designed for fast and accurate bending of steel bars into stirrups, rings, and complex shapes used in reinforced concrete construction. It is widely used at construction sites, rebar fabrication yards, and precast concrete plants to produce stirrups for beams, columns, slabs, footings, and foundations with consistent dimensions.",
-    image: "/images/machines/stirrup-bender-d4.webp",
+    image: "/images/machines/stirrup-bender-d4.jpg",
     gallery: [
-      "/images/machines/stirrup-bender-d4.webp",
+      "/images/machines/stirrup-bender-d4.jpg",
       "/images/machines/stirrup-rings-stack.webp",
       "/images/machines/rebar-cutting-sparks.webp"
     ],
@@ -182,9 +182,9 @@ export const products = [
     priceNum: 95000,
     shortDescription: "Heavy duty concrete mixer with integrated hydraulic lift for efficient batching on construction sites.",
     description: "The CMX500 Concrete Mixer with Lift is a heavy-duty machine designed for efficient concrete mixing on construction sites. The integrated hydraulic lift system allows for easy loading and precise discharge.",
-    image: "/images/machines/concrete-mixer-machine.webp",
+    image: "/images/machines/concrete-mixer-machine.jpg",
     gallery: [
-      "/images/machines/concrete-mixer-machine.webp",
+      "/images/machines/concrete-mixer-machine.jpg",
       "/images/machines/concrete-mixer-site.webp",
       "/images/machines/concrete-pour-site.webp"
     ],
