@@ -384,7 +384,12 @@ export function DataProvider({ children }) {
     // Save to Supabase in background
     const cleaned = cleanProduct(prodData);
     supabase.from('products').upsert([cleaned]).then(({ error }) => {
-      if (error) console.error('[DataContext] Background addProduct error:', error);
+      if (error) {
+        console.error('[DataContext] Background addProduct error:', error);
+        if (typeof window !== 'undefined') {
+          alert('Supabase Database Error:\n' + (error.message || error.hint || JSON.stringify(error)));
+        }
+      }
     }).catch(err => console.error('[DataContext] Background addProduct exception:', err));
   };
 
@@ -398,7 +403,12 @@ export function DataProvider({ children }) {
     // Save to Supabase in background
     const cleaned = cleanProduct(updatedProd);
     supabase.from('products').upsert([cleaned]).then(({ error }) => {
-      if (error) console.error('[DataContext] Background updateProduct error:', error);
+      if (error) {
+        console.error('[DataContext] Background updateProduct error:', error);
+        if (typeof window !== 'undefined') {
+          alert('Supabase Database Error:\n' + (error.message || error.hint || JSON.stringify(error)));
+        }
+      }
     }).catch(err => console.error('[DataContext] Background updateProduct exception:', err));
   };
 
@@ -425,7 +435,9 @@ export function DataProvider({ children }) {
 
     const cleaned = cleanSlide(slideData);
     supabase.from('hero_slides').upsert([cleaned]).then(({ error }) => {
-      if (error) console.error('[DataContext] Background addSlide error:', error);
+      if (error && typeof window !== 'undefined') {
+        alert('Supabase Slide Error:\n' + (error.message || error.hint || JSON.stringify(error)));
+      }
     }).catch(() => {});
   };
 
@@ -438,7 +450,9 @@ export function DataProvider({ children }) {
 
     const cleaned = cleanSlide(updatedSlide);
     supabase.from('hero_slides').upsert([cleaned]).then(({ error }) => {
-      if (error) console.error('[DataContext] Background updateSlide error:', error);
+      if (error && typeof window !== 'undefined') {
+        alert('Supabase Slide Error:\n' + (error.message || error.hint || JSON.stringify(error)));
+      }
     }).catch(() => {});
   };
 
@@ -464,7 +478,9 @@ export function DataProvider({ children }) {
 
     const cleaned = cleanBlog(blogData);
     supabase.from('blogs').upsert([cleaned]).then(({ error }) => {
-      if (error) console.error('[DataContext] Background addBlog error:', error);
+      if (error && typeof window !== 'undefined') {
+        alert('Supabase Blog Error:\n' + (error.message || error.hint || JSON.stringify(error)));
+      }
     }).catch(() => {});
   };
 
@@ -477,7 +493,9 @@ export function DataProvider({ children }) {
 
     const cleaned = cleanBlog(updatedBlog);
     supabase.from('blogs').upsert([cleaned]).then(({ error }) => {
-      if (error) console.error('[DataContext] Background updateBlog error:', error);
+      if (error && typeof window !== 'undefined') {
+        alert('Supabase Blog Error:\n' + (error.message || error.hint || JSON.stringify(error)));
+      }
     }).catch(() => {});
   };
 
@@ -503,7 +521,9 @@ export function DataProvider({ children }) {
 
     const cleaned = cleanCategory(catData);
     supabase.from('categories').upsert([cleaned]).then(({ error }) => {
-      if (error) console.error('[DataContext] Background addCategory error:', error);
+      if (error && typeof window !== 'undefined') {
+        alert('Supabase Category Error:\n' + (error.message || error.hint || JSON.stringify(error)));
+      }
     }).catch(() => {});
   };
 
@@ -516,7 +536,9 @@ export function DataProvider({ children }) {
 
     const cleaned = cleanCategory(updatedCat);
     supabase.from('categories').upsert([cleaned]).then(({ error }) => {
-      if (error) console.error('[DataContext] Background updateCategory error:', error);
+      if (error && typeof window !== 'undefined') {
+        alert('Supabase Category Error:\n' + (error.message || error.hint || JSON.stringify(error)));
+      }
     }).catch(() => {});
   };
 
@@ -539,7 +561,9 @@ export function DataProvider({ children }) {
     saveStorage('rk_cms_about', newAboutData);
 
     supabase.from('site_settings').upsert([{ key: 'about_section', value: newAboutData }]).then(({ error }) => {
-      if (error) console.error('[DataContext] Background updateAbout error:', error);
+      if (error && typeof window !== 'undefined') {
+        alert('Supabase About Error:\n' + (error.message || error.hint || JSON.stringify(error)));
+      }
     }).catch(() => {});
   };
 

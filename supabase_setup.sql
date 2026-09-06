@@ -129,25 +129,38 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.hero_slides ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 
--- Drop old policies (safe to re-run)
+-- Drop old policies (safe to re-run multiple times)
 DROP POLICY IF EXISTS "Public read blogs" ON public.blogs;
 DROP POLICY IF EXISTS "Admin manage blogs" ON public.blogs;
+DROP POLICY IF EXISTS "Allow all blogs" ON public.blogs;
+
 DROP POLICY IF EXISTS "Public read products" ON public.products;
 DROP POLICY IF EXISTS "Admin manage products" ON public.products;
+DROP POLICY IF EXISTS "Allow all products" ON public.products;
+
 DROP POLICY IF EXISTS "Public read categories" ON public.categories;
 DROP POLICY IF EXISTS "Admin manage categories" ON public.categories;
+DROP POLICY IF EXISTS "Allow all categories" ON public.categories;
+
 DROP POLICY IF EXISTS "Public read hero_slides" ON public.hero_slides;
 DROP POLICY IF EXISTS "Admin manage hero_slides" ON public.hero_slides;
+DROP POLICY IF EXISTS "Allow all hero_slides" ON public.hero_slides;
+
 DROP POLICY IF EXISTS "Public read site_settings" ON public.site_settings;
 DROP POLICY IF EXISTS "Admin manage site_settings" ON public.site_settings;
+DROP POLICY IF EXISTS "Allow all site_settings" ON public.site_settings;
+
 DROP POLICY IF EXISTS "Public insert enquiries" ON public.enquiries;
 DROP POLICY IF EXISTS "Admin read enquiries" ON public.enquiries;
 DROP POLICY IF EXISTS "Admin update enquiries" ON public.enquiries;
 DROP POLICY IF EXISTS "Admin delete enquiries" ON public.enquiries;
+DROP POLICY IF EXISTS "Allow all enquiries" ON public.enquiries;
+
 DROP POLICY IF EXISTS "Public insert orders" ON public.orders;
 DROP POLICY IF EXISTS "Admin read orders" ON public.orders;
 DROP POLICY IF EXISTS "Admin update orders" ON public.orders;
 DROP POLICY IF EXISTS "Admin delete orders" ON public.orders;
+DROP POLICY IF EXISTS "Allow all orders" ON public.orders;
 
 -- Catalog content & site settings: public read & write (enables Admin panel edits to immediately persist to DB)
 CREATE POLICY "Public read blogs" ON public.blogs FOR SELECT USING (true);
@@ -171,4 +184,5 @@ CREATE POLICY "Allow all enquiries" ON public.enquiries FOR ALL USING (true) WIT
 
 CREATE POLICY "Public insert orders" ON public.orders FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow all orders" ON public.orders FOR ALL USING (true) WITH CHECK (true);
+
 
