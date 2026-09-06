@@ -75,8 +75,8 @@ export default function AdminDashboardPage() {
     setTimeout(() => setNotification(''), 4000);
   };
 
-  // Compress image using Canvas API before storing (reduces ~2-5MB to ~80-150KB)
-  const compressImage = (file, maxWidth = 800, quality = 0.75) => {
+  // Compress image using Canvas API before storing (reduces ~2-5MB to ~30-60KB for fast network sync)
+  const compressImage = (file, maxWidth = 700, quality = 0.6) => {
     return new Promise((resolve) => {
       const objectUrl = URL.createObjectURL(file);
       const img = new window.Image();
