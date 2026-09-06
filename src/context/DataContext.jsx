@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { products as defaultProducts } from '../data/products';
 import { categories as defaultCategories } from '../data/categories';
 import { insights as defaultBlogs } from '../data/insights';
@@ -101,6 +101,9 @@ export function DataProvider({ children }) {
   const [blogs, setBlogs] = useState(defaultBlogs);
   const [aboutData, setAboutData] = useState(defaultAboutData);
   const [orders, setOrders] = useState([]);
+  
+  // Track timestamp of local admin edit to prevent local re-render lag from realtime echoes
+  const lastLocalEditRef = useRef(0);
 
   const normalizeSlide = (s) => ({
     id: s.id || Date.now().toString(),
@@ -120,7 +123,64 @@ export function DataProvider({ children }) {
     ]
   });
 
-  // Synchronize on initial mount from localStorage / Supabase
+  // Table-specific fetch helpers for micro-targeted updates
+  const fetchProductsOnly = async () => {
+    try {
+      const { data: supaProds } = await supabase.from('products').select('*');
+      if (supaProds && supaProds.length > 0) {
+        setProducts(supaProds);
+        saveStorage('rk_cms_products', supaProds);
+      }
+    } catch (e) {}
+  };
+
+  const fetchCategoriesOnly = async () => {
+    try {
+      const { data: supaCats } = await supabase.from('categories').select('*');
+      if (supaCats && supaCats.length > 0) {
+        setCategories(supaCats);
+        saveStorage('rk_cms_categories', supaCats);
+      }
+    } catch (e) {}
+  };
+
+  const fetchSlidesOnly = async () => {
+    try {
+      const { data: supaSlides } = await supabase.from('hero_slides').select('*');
+      if (supaSlides && supaSlides.length > 0) {
+        const normSupa = supaSlides.map(normalizeSlide);
+        setSlides(normSupa);
+        saveStorage('rk_cms_slides', normSupa);
+      }
+    } catch (e) {}
+  };
+
+  const fetchBlogsOnly = async () => {
+    try {
+      const { data: supaBlogs } = await supabase.from('blogs').select('*');
+      if (supaBlogs && supaBlogs.length > 0) {
+        setBlogs(supaBlogs);
+        saveStorage('rk_cms_blogs', supaBlogs);
+      }
+    } catch (e) {}
+  };
+
+  const fetchAboutOnly = async () => {
+    try {
+      const { data: supaAboutData } = await supabase
+        .from('site_settings')
+        .select('*')
+        .eq('key', 'about_section')
+        .maybeSingle();
+
+      if (supaAboutData && supaAboutData.value) {
+        setAboutData(supaAboutData.value);
+        saveStorage('rk_cms_about', supaAboutData.value);
+      }
+    } catch (e) {}
+  };
+
+  // Synchronize on initial mount from localStorage / Supabase + Realtime listener
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedProds = localStorage.getItem('rk_cms_products');
@@ -151,79 +211,39 @@ export function DataProvider({ children }) {
       }
     }
 
-    // Try fetching from Supabase database
-    const syncFromSupabase = async () => {
-      try {
-        const { data: supaProds } = await supabase.from('products').select('*');
-        if (supaProds && supaProds.length > 0) {
-          let localProds = [];
-          if (typeof window !== 'undefined') {
-            try {
-              const stored = localStorage.getItem('rk_cms_products');
-              if (stored) localProds = JSON.parse(stored);
-            } catch (e) {}
-          }
-          const mergedProds = supaProds.map(sProd => {
-            const localMatch = localProds.find(l => String(l.id) === String(sProd.id));
-            if (localMatch && localMatch.image && localMatch.image !== '/images/img/Untitled design - 2026-02-02T154951.040.webp' && (!sProd.image || sProd.image === '/images/img/Untitled design - 2026-02-02T154951.040.webp')) {
-              return { ...sProd, image: localMatch.image, gallery: [localMatch.image] };
-            }
-            return sProd;
-          });
-          setProducts(mergedProds);
-          saveStorage('rk_cms_products', mergedProds);
-        }
-
-        const { data: supaCats } = await supabase.from('categories').select('*');
-        if (supaCats && supaCats.length > 0) {
-          let localCats = [];
-          if (typeof window !== 'undefined') {
-            try {
-              const stored = localStorage.getItem('rk_cms_categories');
-              if (stored) localCats = JSON.parse(stored);
-            } catch (e) {}
-          }
-          const mergedCats = supaCats.map(sCat => {
-            const localMatch = localCats.find(l => String(l.id) === String(sCat.id));
-            if (localMatch && localMatch.image && localMatch.image !== '/images/img/Untitled design - 2026-02-02T154951.040.webp' && (!sCat.image || sCat.image === '/images/img/Untitled design - 2026-02-02T154951.040.webp')) {
-              return { ...sCat, image: localMatch.image };
-            }
-            return sCat;
-          });
-          setCategories(mergedCats);
-          saveStorage('rk_cms_categories', mergedCats);
-        }
-
-        const { data: supaSlides } = await supabase.from('hero_slides').select('*');
-        if (supaSlides && supaSlides.length > 0) {
-          const normSupa = supaSlides.map(normalizeSlide);
-          setSlides(normSupa);
-          saveStorage('rk_cms_slides', normSupa);
-        }
-
-        const { data: supaBlogs } = await supabase.from('blogs').select('*');
-        if (supaBlogs && supaBlogs.length > 0) {
-          let localBlogs = [];
-          if (typeof window !== 'undefined') {
-            try {
-              const stored = localStorage.getItem('rk_cms_blogs');
-              if (stored) localBlogs = JSON.parse(stored);
-            } catch (e) {}
-          }
-          const mergedBlogs = supaBlogs.map(sBlog => {
-            const localMatch = localBlogs.find(l => String(l.id) === String(sBlog.id));
-            if (localMatch && localMatch.image && (!sBlog.image || sBlog.image.includes('unsplash.com'))) {
-              return { ...sBlog, image: localMatch.image };
-            }
-            return sBlog;
-          });
-          setBlogs(mergedBlogs);
-          saveStorage('rk_cms_blogs', mergedBlogs);
-        }
-      } catch (err) {}
+    // Initial sync for all tables
+    const syncAllFromSupabase = async () => {
+      await fetchProductsOnly();
+      await fetchCategoriesOnly();
+      await fetchSlidesOnly();
+      await fetchBlogsOnly();
+      await fetchAboutOnly();
     };
 
-    syncFromSupabase();
+    syncAllFromSupabase();
+
+    // Subscribe to Supabase Realtime changes for instant live updates across visitors
+    let channel = null;
+    try {
+      channel = supabase
+        .channel('public-cms-changes')
+        .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+          // Skip Realtime echo if local edit was executed less than 4s ago (prevents 1s lag for local admin)
+          if (Date.now() - lastLocalEditRef.current < 4000) {
+            return;
+          }
+          if (payload.table === 'products') fetchProductsOnly();
+          else if (payload.table === 'categories') fetchCategoriesOnly();
+          else if (payload.table === 'hero_slides') fetchSlidesOnly();
+          else if (payload.table === 'blogs') fetchBlogsOnly();
+          else if (payload.table === 'site_settings') fetchAboutOnly();
+        })
+        .subscribe();
+    } catch (e) {}
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   // Orders contain customer PII — only sync when admin is authenticated via Supabase
@@ -283,13 +303,6 @@ export function DataProvider({ children }) {
     }
   };
 
-
-  // Preserve user chosen image 100% without stripping base64 or forcing default SONA image
-  const safeImageForSupabase = (img) => {
-    return img || '';
-  };
-
-  // Keep original image (including base64) for localStorage
   const keepImage = (img) => {
     return img || '';
   };
@@ -360,203 +373,174 @@ export function DataProvider({ children }) {
 
   const cleanSlide = (s) => rawSlide(s);
 
-  // --- PRODUCT CRUD ---
-  const addProduct = async (prodData) => {
+  // --- PRODUCT CRUD (0ms Instant Local Update + Async Background Database Upsert) ---
+  const addProduct = (prodData) => {
+    lastLocalEditRef.current = Date.now();
     const raw = rawProduct(prodData);
     const updated = [raw, ...products];
     setProducts(updated);
     saveStorage('rk_cms_products', updated);
-    const cleaned = cleanProduct(prodData);
 
-    try {
-      console.log('Sending to Supabase products:', cleaned);
-      const { data, error } = await supabase.from('products').upsert([cleaned]);
-      if (error) {
-        console.error('Supabase addProduct Error:', error);
-        if (typeof window !== 'undefined') {
-          alert('Supabase Product Error:\n' + (error.message || error.hint || JSON.stringify(error)));
-        }
-      } else {
-        console.log('Supabase addProduct SUCCESS:', data);
-      }
-    } catch (err) {
-      console.error('Supabase addProduct Exception:', err);
-      if (typeof window !== 'undefined') alert('Product save exception: ' + err.message);
-    }
+    // Save to Supabase in background
+    const cleaned = cleanProduct(prodData);
+    supabase.from('products').upsert([cleaned]).then(({ error }) => {
+      if (error) console.error('[DataContext] Background addProduct error:', error);
+    }).catch(err => console.error('[DataContext] Background addProduct exception:', err));
   };
 
-  const updateProduct = async (updatedProd) => {
+  const updateProduct = (updatedProd) => {
+    lastLocalEditRef.current = Date.now();
     const raw = rawProduct(updatedProd);
     const updated = products.map(p => String(p.id) === String(raw.id) ? raw : p);
     setProducts(updated);
     saveStorage('rk_cms_products', updated);
-    const cleaned = cleanProduct(updatedProd);
 
-    try {
-      const { data, error } = await supabase.from('products').upsert([cleaned]);
-      if (error) console.error('Supabase updateProduct Error:', error);
-      else console.log('Supabase updateProduct Success:', data);
-    } catch (err) {
-      console.error('Supabase updateProduct Exception:', err);
-    }
+    // Save to Supabase in background
+    const cleaned = cleanProduct(updatedProd);
+    supabase.from('products').upsert([cleaned]).then(({ error }) => {
+      if (error) console.error('[DataContext] Background updateProduct error:', error);
+    }).catch(err => console.error('[DataContext] Background updateProduct exception:', err));
   };
 
-  const deleteProduct = async (id) => {
+  const deleteProduct = (id) => {
+    lastLocalEditRef.current = Date.now();
     const targetId = String(id);
     const updated = products.filter(p => String(p.id) !== targetId);
     setProducts(updated);
     saveStorage('rk_cms_products', updated);
 
-    try {
-      const { error } = await supabase.from('products').delete().eq('id', targetId);
-      if (error) console.error('Supabase deleteProduct Error:', error);
-    } catch (err) {}
+    // Delete from Supabase in background
+    supabase.from('products').delete().eq('id', targetId).then(({ error }) => {
+      if (error) console.error('[DataContext] Background deleteProduct error:', error);
+    }).catch(() => {});
   };
 
-  // --- SLIDE CRUD ---
-  const addSlide = async (slideData) => {
+  // --- SLIDE CRUD (0ms Instant Local Update + Async Background Database Upsert) ---
+  const addSlide = (slideData) => {
+    lastLocalEditRef.current = Date.now();
     const raw = rawSlide(slideData);
     const updated = [...slides, raw];
     setSlides(updated);
     saveStorage('rk_cms_slides', updated);
-    const cleaned = cleanSlide(slideData);
 
-    try {
-      const { error } = await supabase.from('hero_slides').upsert([cleaned]);
-      if (error) console.error('Supabase addSlide Error:', error);
-    } catch (err) {}
+    const cleaned = cleanSlide(slideData);
+    supabase.from('hero_slides').upsert([cleaned]).then(({ error }) => {
+      if (error) console.error('[DataContext] Background addSlide error:', error);
+    }).catch(() => {});
   };
 
-  const updateSlide = async (updatedSlide) => {
+  const updateSlide = (updatedSlide) => {
+    lastLocalEditRef.current = Date.now();
     const raw = rawSlide(updatedSlide);
     const updated = slides.map(s => String(s.id) === String(raw.id) ? raw : s);
     setSlides(updated);
     saveStorage('rk_cms_slides', updated);
-    const cleaned = cleanSlide(updatedSlide);
 
-    try {
-      const { error } = await supabase.from('hero_slides').upsert([cleaned]);
-      if (error) console.error('Supabase updateSlide Error:', error);
-    } catch (err) {}
+    const cleaned = cleanSlide(updatedSlide);
+    supabase.from('hero_slides').upsert([cleaned]).then(({ error }) => {
+      if (error) console.error('[DataContext] Background updateSlide error:', error);
+    }).catch(() => {});
   };
 
-  const deleteSlide = async (id) => {
+  const deleteSlide = (id) => {
+    lastLocalEditRef.current = Date.now();
     const targetId = String(id);
     const updated = slides.filter(s => String(s.id) !== targetId);
     setSlides(updated);
     saveStorage('rk_cms_slides', updated);
 
-    try {
-      const { error } = await supabase.from('hero_slides').delete().eq('id', targetId);
-      if (error) console.error('Supabase deleteSlide Error:', error);
-    } catch (err) {}
+    supabase.from('hero_slides').delete().eq('id', targetId).then(({ error }) => {
+      if (error) console.error('[DataContext] Background deleteSlide error:', error);
+    }).catch(() => {});
   };
 
-  // --- BLOG CRUD ---
-  const addBlog = async (blogData) => {
+  // --- BLOG CRUD (0ms Instant Local Update + Async Background Database Upsert) ---
+  const addBlog = (blogData) => {
+    lastLocalEditRef.current = Date.now();
     const raw = rawBlog(blogData);
     const updated = [raw, ...blogs];
     setBlogs(updated);
     saveStorage('rk_cms_blogs', updated);
-    const cleaned = cleanBlog(blogData);
 
-    try {
-      console.log('Sending to Supabase blogs:', cleaned);
-      const { data, error } = await supabase.from('blogs').upsert([cleaned]);
-      if (error) {
-        console.error('Supabase addBlog Error:', error);
-        if (typeof window !== 'undefined') {
-          alert('Supabase Blog Error:\n' + (error.message || error.hint || JSON.stringify(error)));
-        }
-      } else {
-        console.log('Supabase addBlog SUCCESS:', data);
-      }
-    } catch (err) {
-      console.error('Supabase addBlog Exception:', err);
-      if (typeof window !== 'undefined') alert('Blog save exception: ' + err.message);
-    }
+    const cleaned = cleanBlog(blogData);
+    supabase.from('blogs').upsert([cleaned]).then(({ error }) => {
+      if (error) console.error('[DataContext] Background addBlog error:', error);
+    }).catch(() => {});
   };
 
-  const updateBlog = async (updatedBlog) => {
+  const updateBlog = (updatedBlog) => {
+    lastLocalEditRef.current = Date.now();
     const raw = rawBlog(updatedBlog);
     const updated = blogs.map(b => String(b.id) === String(raw.id) ? raw : b);
     setBlogs(updated);
     saveStorage('rk_cms_blogs', updated);
-    const cleaned = cleanBlog(updatedBlog);
 
-    try {
-      const { data, error } = await supabase.from('blogs').upsert([cleaned]);
-      if (error) console.error('Supabase updateBlog Error:', error);
-      else console.log('Supabase updateBlog Success:', data);
-    } catch (err) {
-      console.error('Supabase updateBlog Exception:', err);
-    }
+    const cleaned = cleanBlog(updatedBlog);
+    supabase.from('blogs').upsert([cleaned]).then(({ error }) => {
+      if (error) console.error('[DataContext] Background updateBlog error:', error);
+    }).catch(() => {});
   };
 
-  const deleteBlog = async (id) => {
+  const deleteBlog = (id) => {
+    lastLocalEditRef.current = Date.now();
     const targetId = String(id);
     const updated = blogs.filter(b => String(b.id) !== targetId);
     setBlogs(updated);
     saveStorage('rk_cms_blogs', updated);
 
-    try {
-      const { error } = await supabase.from('blogs').delete().eq('id', targetId);
-      if (error) console.error('Supabase deleteBlog Error:', error);
-    } catch (err) {}
+    supabase.from('blogs').delete().eq('id', targetId).then(({ error }) => {
+      if (error) console.error('[DataContext] Background deleteBlog error:', error);
+    }).catch(() => {});
   };
 
-  // --- CATEGORY CRUD ---
-  const addCategory = async (catData) => {
+  // --- CATEGORY CRUD (0ms Instant Local Update + Async Background Database Upsert) ---
+  const addCategory = (catData) => {
+    lastLocalEditRef.current = Date.now();
     const raw = rawCategory(catData);
     const updated = [raw, ...categories];
     setCategories(updated);
     saveStorage('rk_cms_categories', updated);
-    const cleaned = cleanCategory(catData);
 
-    try {
-      const { error } = await supabase.from('categories').upsert([cleaned]);
-      if (error) console.error('Supabase addCategory Error:', error);
-    } catch (err) {
-      console.error('Supabase addCategory Exception:', err);
-    }
+    const cleaned = cleanCategory(catData);
+    supabase.from('categories').upsert([cleaned]).then(({ error }) => {
+      if (error) console.error('[DataContext] Background addCategory error:', error);
+    }).catch(() => {});
   };
 
-  const updateCategory = async (updatedCat) => {
+  const updateCategory = (updatedCat) => {
+    lastLocalEditRef.current = Date.now();
     const raw = rawCategory(updatedCat);
     const updated = categories.map(c => String(c.id) === String(raw.id) ? raw : c);
     setCategories(updated);
     saveStorage('rk_cms_categories', updated);
-    const cleaned = cleanCategory(updatedCat);
 
-    try {
-      const { error } = await supabase.from('categories').upsert([cleaned]);
-      if (error) console.error('Supabase updateCategory Error:', error);
-    } catch (err) {
-      console.error('Supabase updateCategory Exception:', err);
-    }
+    const cleaned = cleanCategory(updatedCat);
+    supabase.from('categories').upsert([cleaned]).then(({ error }) => {
+      if (error) console.error('[DataContext] Background updateCategory error:', error);
+    }).catch(() => {});
   };
 
-  const deleteCategory = async (id) => {
+  const deleteCategory = (id) => {
+    lastLocalEditRef.current = Date.now();
     const targetId = String(id);
     const updated = categories.filter(c => String(c.id) !== targetId);
     setCategories(updated);
     saveStorage('rk_cms_categories', updated);
 
-    try {
-      const { error } = await supabase.from('categories').delete().eq('id', targetId);
-      if (error) console.error('Supabase deleteCategory Error:', error);
-    } catch (err) {}
+    supabase.from('categories').delete().eq('id', targetId).then(({ error }) => {
+      if (error) console.error('[DataContext] Background deleteCategory error:', error);
+    }).catch(() => {});
   };
 
-  // --- ABOUT US CRUD ---
-  const updateAbout = async (newAboutData) => {
+  // --- ABOUT US CRUD (0ms Instant Local Update + Async Background Database Upsert) ---
+  const updateAbout = (newAboutData) => {
+    lastLocalEditRef.current = Date.now();
     setAboutData(newAboutData);
     saveStorage('rk_cms_about', newAboutData);
 
-    try {
-      const { error } = await supabase.from('site_settings').upsert([{ key: 'about_section', value: newAboutData }]);
-      if (error) console.error('Supabase updateAbout Error:', error);
-    } catch (err) {}
+    supabase.from('site_settings').upsert([{ key: 'about_section', value: newAboutData }]).then(({ error }) => {
+      if (error) console.error('[DataContext] Background updateAbout error:', error);
+    }).catch(() => {});
   };
 
   // --- ORDERS CRUD ---
